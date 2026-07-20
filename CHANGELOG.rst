@@ -4,6 +4,26 @@ Cisco Iosxr Collection Release Notes
 
 .. contents:: Topics
 
+v12.4.0
+=======
+
+Minor Changes
+-------------
+
+- Fixed for iosxr_lldp_interfaces, iosxr_lldp_global, iosxr_lag_interfaces, iosxr_lacp_interfaces, iosxr_lacp, iosxr_l3_interfaces, iosxr_l2_interfaces, iosxr_interfaces, iosxr_acls, iosxr_static_routes, iosxr_ping,iosxr_banner, iosxr_config, iosxr_system, iosxr_command, iosxr_user, iosxr_netconf
+- For iosxr_vrf_interfaces, iosxr_vrf_global, iosxr_vrf_address_family, iosxr_snmp_server, iosxr_route_maps, iosxr_prefix_lists, iosxr_ospfv3, iosxr_ospfv2, iosxr_ospf_interfaces, iosxr_ntp_global, iosxr_logging_global, iosxr_hostname, iosxr_bgp_templates, iosxr_bgp_neighbor_address_family, iosxr_bgp_global, iosxr_bgp_address_family, iosxr_acl_interfaces modules ,fix will be done via netcommon ResourceModule.result change (Upstream to iosxr)
+- No changes for fail_json since it uses msg format already , except for ping module where currently warning is not being set.
+- Remediate deprecated 'to_bytes' from 'ansible.module_utils._text' and replaced with ansible.module_utils.common.text.converters.
+- Remediate deprecated 'to_text' from 'ansible.module_utils._text' and replaced with ansible.module_utils.common.text.converters.
+- Remediate deprecated ``warnings`` parameter in ``exit_json`` calls by using ``AnsibleModule.warn()`` across all iosxr modules to address deprecation warning from ansible-core 2.23.
+- Remediate deprecated `ansible.module_utils.common._collections_compat` module and replaced with `collections.abc` from the Python standard library.
+
+Bugfixes
+--------
+
+- bgp_global - Fixed neighbor shutdown state parsing to correctly handle 'no shutdown' command, ensuring proper idempotency when toggling neighbor shutdown state.
+- bgp_global - Removed stale `_build_key` function present in `_bgp_list_to_dict` within the config py file.
+
 v12.3.2
 =======
 
