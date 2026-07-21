@@ -10,7 +10,7 @@ import pytest
 pytest.importorskip("ncclient")
 pytest.importorskip("lxml")
 
-from lxml.etree import Element, tostring
+from lxml.etree import Element
 
 from ansible_collections.cisco.iosxr.plugins.netconf.iosxr import Netconf
 
@@ -86,7 +86,7 @@ class TestEditConfigHugeTree:
 
     def test_edit_config_none_raises_value_error(self, netconf_plugin):
         """Verify ValueError is raised when config is None"""
-        plugin, _ = netconf_plugin
+        plugin, mock_manager = netconf_plugin
 
         with pytest.raises(ValueError, match="config value must be provided"):
             plugin.edit_config(config=None)
