@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - "netconf - Parse large XML config strings with ``huge_tree=True`` in ``edit_config``
+    to prevent lxml from rejecting payloads exceeding the default 10MB text-node limit."
