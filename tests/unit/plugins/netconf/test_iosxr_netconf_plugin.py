@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
 pytest.importorskip("ncclient")
 pytest.importorskip("lxml")
 
@@ -160,7 +161,8 @@ class TestGet:
 
         plugin.get(filter=["subtree", "<System/>"])
         mock_manager.get.assert_called_once_with(
-            filter=("subtree", "<System/>"), with_defaults=None,
+            filter=("subtree", "<System/>"),
+            with_defaults=None,
         )
 
     @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
@@ -216,7 +218,8 @@ class TestGetConfig:
 
         plugin.get_config(source="running", filter="<interfaces/>")
         mock_manager.get_config.assert_called_once_with(
-            source="running", filter="<interfaces/>",
+            source="running",
+            filter="<interfaces/>",
         )
 
     def test_get_config_filter_list_converted_to_tuple(self, netconf_plugin):
@@ -227,7 +230,8 @@ class TestGetConfig:
 
         plugin.get_config(source="running", filter=["subtree", "<if/>"])
         mock_manager.get_config.assert_called_once_with(
-            source="running", filter=("subtree", "<if/>"),
+            source="running",
+            filter=("subtree", "<if/>"),
         )
 
     @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
@@ -281,7 +285,9 @@ class TestCommit:
 
         plugin.commit(confirmed=True, timeout=120, persist="my-persist")
         mock_manager.commit.assert_called_once_with(
-            confirmed=True, timeout="120", persist="my-persist",
+            confirmed=True,
+            timeout="120",
+            persist="my-persist",
         )
 
     @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
@@ -393,9 +399,11 @@ class TestGetCapabilities:
         mock_manager.client_capabilities = ["urn:ietf:params:netconf:base:1.0"]
         mock_manager.session_id = "12345"
 
-        with patch.object(plugin, "get_base_rpc", return_value=["edit-config"]), \
-             patch.object(plugin, "get_device_info", return_value={"network_os": "iosxr"}), \
-             patch.object(plugin, "get_device_operations", return_value={}):
+        with patch.object(plugin, "get_base_rpc", return_value=["edit-config"]), patch.object(
+            plugin,
+            "get_device_info",
+            return_value={"network_os": "iosxr"},
+        ), patch.object(plugin, "get_device_operations", return_value={}):
             import json
 
             result = json.loads(plugin.get_capabilities())
