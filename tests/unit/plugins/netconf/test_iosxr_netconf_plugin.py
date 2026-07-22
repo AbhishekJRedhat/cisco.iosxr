@@ -117,3 +117,288 @@ class TestEditConfigHugeTree:
         result = plugin.edit_config(config="<config/>", remove_ns=True)
 
         mock_remove_ns.assert_called_once_with(mock_resp)
+
+    def test_edit_config_uses_xml_response(self, netconf_plugin):
+        """Verify fallback to resp.xml when data_xml is not available"""
+        plugin, mock_manager = netconf_plugin
+
+        mock_resp = MagicMock(spec=[])
+        mock_resp.xml = "<ok-xml/>"
+        mock_manager.edit_config.return_value = mock_resp
+
+        result = plugin.edit_config(config="<config/>")
+        assert result == "<ok-xml/>"
+
+
+class TestGet:
+    """Tests for get method"""
+
+    def test_get_returns_data_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<data>result</data>"
+        mock_manager.get.return_value = mock_resp
+
+        result = plugin.get()
+        assert result == "<data>result</data>"
+        mock_manager.get.assert_called_once_with(filter=None, with_defaults=None)
+
+    def test_get_with_filter(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<data/>"
+        mock_manager.get.return_value = mock_resp
+
+        plugin.get(filter="<System/>")
+        mock_manager.get.assert_called_once_with(filter="<System/>", with_defaults=None)
+
+    def test_get_filter_list_converted_to_tuple(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<data/>"
+        mock_manager.get.return_value = mock_resp
+
+        plugin.get(filter=["subtree", "<System/>"])
+        mock_manager.get.assert_called_once_with(
+            filter=("subtree", "<System/>"), with_defaults=None,
+        )
+
+    @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
+    def test_get_remove_ns(self, mock_remove_ns, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_manager.get.return_value = mock_resp
+        mock_remove_ns.return_value = "<clean/>"
+
+        result = plugin.get(remove_ns=True)
+        assert result == "<clean/>"
+        mock_remove_ns.assert_called_once_with(mock_resp)
+
+    def test_get_falls_back_to_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock(spec=[])
+        mock_resp.xml = "<data-xml/>"
+        mock_manager.get.return_value = mock_resp
+
+        result = plugin.get()
+        assert result == "<data-xml/>"
+
+    def test_get_rpc_error(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        from ncclient.operations import RPCError
+
+        rpc_error = MagicMock()
+        rpc_error.xml = Element("rpc-error")
+        mock_manager.get.side_effect = RPCError(rpc_error)
+
+        with pytest.raises(Exception):
+            plugin.get()
+
+
+class TestGetConfig:
+    """Tests for get_config method"""
+
+    def test_get_config_returns_data_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<config>running</config>"
+        mock_manager.get_config.return_value = mock_resp
+
+        result = plugin.get_config(source="running")
+        assert result == "<config>running</config>"
+        mock_manager.get_config.assert_called_once_with(source="running", filter=None)
+
+    def test_get_config_with_filter(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<data/>"
+        mock_manager.get_config.return_value = mock_resp
+
+        plugin.get_config(source="running", filter="<interfaces/>")
+        mock_manager.get_config.assert_called_once_with(
+            source="running", filter="<interfaces/>",
+        )
+
+    def test_get_config_filter_list_converted_to_tuple(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<data/>"
+        mock_manager.get_config.return_value = mock_resp
+
+        plugin.get_config(source="running", filter=["subtree", "<if/>"])
+        mock_manager.get_config.assert_called_once_with(
+            source="running", filter=("subtree", "<if/>"),
+        )
+
+    @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
+    def test_get_config_remove_ns(self, mock_remove_ns, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_manager.get_config.return_value = mock_resp
+        mock_remove_ns.return_value = "<clean/>"
+
+        result = plugin.get_config(source="running", remove_ns=True)
+        assert result == "<clean/>"
+
+    def test_get_config_falls_back_to_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock(spec=[])
+        mock_resp.xml = "<cfg-xml/>"
+        mock_manager.get_config.return_value = mock_resp
+
+        result = plugin.get_config(source="running")
+        assert result == "<cfg-xml/>"
+
+    def test_get_config_rpc_error(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        from ncclient.operations import RPCError
+
+        rpc_error = MagicMock()
+        rpc_error.xml = Element("rpc-error")
+        mock_manager.get_config.side_effect = RPCError(rpc_error)
+
+        with pytest.raises(Exception):
+            plugin.get_config(source="running")
+
+
+class TestCommit:
+    """Tests for commit method"""
+
+    def test_commit_returns_data_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<ok/>"
+        mock_manager.commit.return_value = mock_resp
+
+        result = plugin.commit()
+        assert result == "<ok/>"
+
+    def test_commit_with_params(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<ok/>"
+        mock_manager.commit.return_value = mock_resp
+
+        plugin.commit(confirmed=True, timeout=120, persist="my-persist")
+        mock_manager.commit.assert_called_once_with(
+            confirmed=True, timeout="120", persist="my-persist",
+        )
+
+    @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
+    def test_commit_remove_ns(self, mock_remove_ns, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_manager.commit.return_value = mock_resp
+        mock_remove_ns.return_value = "<clean/>"
+
+        result = plugin.commit(remove_ns=True)
+        assert result == "<clean/>"
+
+    def test_commit_rpc_error(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        from ncclient.operations import RPCError
+
+        rpc_error = MagicMock()
+        rpc_error.xml = Element("rpc-error")
+        mock_manager.commit.side_effect = RPCError(rpc_error)
+
+        with pytest.raises(Exception):
+            plugin.commit()
+
+
+class TestValidate:
+    """Tests for validate method"""
+
+    def test_validate_returns_data_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<ok/>"
+        mock_manager.validate.return_value = mock_resp
+
+        result = plugin.validate()
+        assert result == "<ok/>"
+        mock_manager.validate.assert_called_once_with(source="candidate")
+
+    def test_validate_custom_source(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<ok/>"
+        mock_manager.validate.return_value = mock_resp
+
+        plugin.validate(source="running")
+        mock_manager.validate.assert_called_once_with(source="running")
+
+    @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
+    def test_validate_remove_ns(self, mock_remove_ns, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_manager.validate.return_value = mock_resp
+        mock_remove_ns.return_value = "<clean/>"
+
+        result = plugin.validate(remove_ns=True)
+        assert result == "<clean/>"
+
+    def test_validate_rpc_error(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        from ncclient.operations import RPCError
+
+        rpc_error = MagicMock()
+        rpc_error.xml = Element("rpc-error")
+        mock_manager.validate.side_effect = RPCError(rpc_error)
+
+        with pytest.raises(Exception):
+            plugin.validate()
+
+
+class TestDiscardChanges:
+    """Tests for discard_changes method"""
+
+    def test_discard_changes_returns_data_xml(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_resp.data_xml = "<ok/>"
+        mock_manager.discard_changes.return_value = mock_resp
+
+        result = plugin.discard_changes()
+        assert result == "<ok/>"
+
+    @patch("ansible_collections.cisco.iosxr.plugins.netconf.iosxr.remove_namespaces")
+    def test_discard_changes_remove_ns(self, mock_remove_ns, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_resp = MagicMock()
+        mock_manager.discard_changes.return_value = mock_resp
+        mock_remove_ns.return_value = "<clean/>"
+
+        result = plugin.discard_changes(remove_ns=True)
+        assert result == "<clean/>"
+
+    def test_discard_changes_rpc_error(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        from ncclient.operations import RPCError
+
+        rpc_error = MagicMock()
+        rpc_error.xml = Element("rpc-error")
+        mock_manager.discard_changes.side_effect = RPCError(rpc_error)
+
+        with pytest.raises(Exception):
+            plugin.discard_changes()
+
+
+class TestGetCapabilities:
+    """Tests for get_capabilities method"""
+
+    def test_get_capabilities(self, netconf_plugin):
+        plugin, mock_manager = netconf_plugin
+        mock_manager.server_capabilities = ["urn:ietf:params:netconf:base:1.0"]
+        mock_manager.client_capabilities = ["urn:ietf:params:netconf:base:1.0"]
+        mock_manager.session_id = "12345"
+
+        with patch.object(plugin, "get_base_rpc", return_value=["edit-config"]), \
+             patch.object(plugin, "get_device_info", return_value={"network_os": "iosxr"}), \
+             patch.object(plugin, "get_device_operations", return_value={}):
+            import json
+
+            result = json.loads(plugin.get_capabilities())
+            assert result["network_api"] == "netconf"
+            assert result["device_info"]["network_os"] == "iosxr"
+            assert result["session_id"] == "12345"
