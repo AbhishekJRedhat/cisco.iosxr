@@ -247,7 +247,8 @@ class Netconf(NetconfBase):
             raise ValueError("config value must be provided")
 
         if isinstance(config, str):
-            from lxml.etree import XMLParser as _XMLParser, fromstring as _fromstring
+            from lxml.etree import XMLParser as _XMLParser
+            from lxml.etree import fromstring as _fromstring
 
             config = _fromstring(config.encode("UTF-8"), parser=_XMLParser(huge_tree=True))
         try:
